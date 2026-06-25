@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CloudGuard - Automated Security Compliance Scanner
+
+Resources:
+  # 1. The Core Security Scanner Lambda
+  CloudGuardScannerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.14
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref CloudGuardNotificationTopic
+      
+      # 👇 ADD THIS BLOCK TO CHOREOGRAPH THE AUTOMATIC TICKER
+      Events:
+        DailySecurityScan:
+          Type: Schedule
+          Properties:
+            # Runs automatically every single day at 12:00 AM UTC
+            Schedule: 'cron(0 0 * * ? *)'
+            Description: Cost-optimal daily cron trigger for CloudGuard compliance auditing.
+
+  # 2. The Alert Routing Communication Channel
+  CloudGuardNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: CloudGuard-Security-Alerts
+
+  # 3. The Email Delivery Endpoint
+  CloudGuardEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CloudGuardNotificationTopic
+      Protocol: email
+      Endpoint: tusharalange1313@gmail.com

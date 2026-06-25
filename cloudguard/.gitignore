@@ -1,0 +1,10 @@
+# AWS SAM build artifacts
+.aws-sam/
+
+# Local parameter files containing secret ARNs
+env.json
+samconfig.toml
+
+# Python cache files
+__pycache__/
+*.pyc
