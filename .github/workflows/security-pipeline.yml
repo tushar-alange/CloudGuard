@@ -1,0 +1,21 @@
+name: CloudGuard Security Pipeline
+
+# This triggers the robot every time you push code to the main branch
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  infrastructure-scan:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Download your repository code onto the GitHub server
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Run Checkov to scan the template.yaml file
+      - name: Run Checkov Security Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: cloudformation # SAM templates compile into CloudFormation
