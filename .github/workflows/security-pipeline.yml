@@ -8,7 +8,6 @@ jobs:
   infrastructure-scan:
     runs-on: ubuntu-latest
     steps:
-      # Pulls the updated repository checkout module
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
 
