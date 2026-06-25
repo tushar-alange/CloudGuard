@@ -13,7 +13,7 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: cloudguard-security-alerts
-      KmsMasterKeyId: alias/aws/sns # ✅ FIXES CKV_AWS_26: Enables encryption at rest using default AWS keys
+      KmsMasterKeyId: alias/aws/sns
       Subscription:
         - Endpoint: !Ref AdminNotificationEmail
           Protocol: email
@@ -21,16 +21,22 @@ Resources:
   # 2. Serverless Computing Resource
   CloudGuardScannerFunction:
     Type: AWS::Serverless::Function
+    # 👇 ✅ FIXED OVERRIDES: Metadata must sit exactly here (not inside Properties!)
+    Metadata:
+      Checkov:
+        Skip:
+          - CKV_AWS_116: "Dead Letter Queue is not required for a stateless read-only automated cron script."
+          - CKV_AWS_117: "VPC placement is unnecessary as the execution logic interacts solely with global AWS public endpoints."
+          - CKV_AWS_173: "Environment variables only map basic resource ARNs, eliminating the requirement for custom KMS configurations."
     Properties:
       CodeUri: src/
       Handler: app.lambda_handler
       Runtime: python3.14
       Timeout: 30
-      ReservedConcurrentExecutions: 1 # ✅ FIXES CKV_AWS_115: Enforces execution limits to mitigate resource exhaustion
+      ReservedConcurrentExecutions: 1
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref CloudGuardSNSTopic
-      # Give Lambda direct privileges to inspect IAM parameters
       Policies:
         - Statement:
             - Effect: Allow
@@ -43,7 +49,6 @@ Resources:
               Action:
                 - sns:Publish
               Resource: !Ref CloudGuardSNSTopic
-      # 3. Event-Driven Automated Cron Trigger
       Events:
         MidnightScheduledAudit:
           Type: Schedule
@@ -52,14 +57,6 @@ Resources:
             Name: CloudGuardDailyCron
             Description: Automated trigger for the CloudGuard compliance engine
             Enabled: True
-      
-      # ✅ BYPASSES CKV_AWS_116, CKV_AWS_117, CKV_AWS_173: Documenting intentional architecture overrides
-      Metadata:
-        Checkov:
-          Skip:
-            - CKV_AWS_116: "Dead Letter Queue is not required for a stateless read-only automated cron script."
-            - CKV_AWS_117: "VPC placement is unnecessary as the execution logic interacts solely with global AWS public endpoints."
-            - CKV_AWS_173: "Environment variables only map basic resource ARNs, eliminating the requirement for custom KMS configurations."
 
 Outputs:
   LambdaFunctionARN:
